@@ -1,3 +1,4 @@
 const activeUsers = {}
+const activeGames = {}
 
-module.exports = {activeUsers}
+module.exports = {activeUsers, activeGames}

@@ -14,6 +14,9 @@ realtime.connect(server);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// socket.io
+const connection = require('./realtime').connection();
+
 // export data
 const {activeUsers} = require("./db");
 
@@ -26,13 +29,6 @@ app.use('/api/v1/auth', AuthController)
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-
-
-
-
-
-
-
 
 server.listen(3000, () => {
     console.log('listening on *:3000');
