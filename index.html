@@ -109,13 +109,17 @@
             });
         });
 
-        socket.on('match_request_', function (data) {
+        socket.on('_match_request', function (data) {
             if(confirm(data.message)) {
                 socket.emit('create_match', {
                     "from": data.from,
                     "to": data.to
                 });
             }
+        });
+
+        socket.on("_notification", function (data) {
+            alert(data.message);
         });
     }
 
