@@ -1,13 +1,14 @@
 let connection = null;
-const {activeUsers, activeGames, activeUsersSocketIds} = require("./db");
+const {activeUsers, activeGames, activeUsersSocketIds, activeRoomsGameIds} = require("./db");
 const uuid = require('uuid');
 class Realtime {
     constructor() {
         this._socket = null;
+        this._io = null;
     }
 
     connect(server) {
-        const io = require('socket.io')(server);
+        let io = require('socket.io')(server);
 
         io.on('connection', (socket) => {
             this._socket = socket;
@@ -17,15 +18,17 @@ class Realtime {
                 activeUsers[username] = {
                     "socket": socket,
                     "isActive": true,
-                    "isAvailable": true
+                    "isAvailable": true,
+                    "connected_room_id": null
                 }
 
                 // store socket.id
                 activeUsersSocketIds[socket.id] = username;
 
                 // notify all users
-                socket.emit('new_registration', Object.keys(activeUsers));
+                io.emit('_new_registration', Object.keys(activeUsers));
                 console.log(`New user ${username} connected!`);
+
             });
 
             this._socket.on('disconnect', function() {
@@ -33,21 +36,32 @@ class Realtime {
                 // if playing notify opponent, but not just remove from active users
                 if(activeUsersSocketIds.hasOwnProperty(socket.id)) {
                     let username = activeUsersSocketIds[socket.id];
+                    if(activeUsers.hasOwnProperty(username)) {
+                        if(!activeUsers[username]["isAvailable"]) {
+                            Object.entries(activeGames).forEach(item =>  {
+                                let opponent = item[1].from === username ? item[1].to : item[1].to === username ? item[1].from : null;
 
-                    // if(activeUsers.hasOwnProperty(username)) {
-                    //     if(!activeUsers[username]["isAvailable"]) {
-                    //         Object.entries(a).forEach(item =>  {
-                    //             if(item[1].hasOwnProperty("farhad")) {
-                    //
-                    //             }
-                    //         })
-                    //     } else {
-                    //         delete activeUsers[username];
-                    //     }
-                    // }
+                                if(opponent != null) {
+                                    let opponent_socket = activeUsers.hasOwnProperty(opponent) ? activeUsers[opponent].socket : null;
+
+                                    if(opponent_socket != null) {
+                                        opponent_socket.emit('_notification', {
+                                            "message": `${username} left game!`
+                                        });
+                                    }
+                                }
+
+                            })
+                        }
+
+                        delete activeUsers[username];
+
+                        // notify all users about user update
+                        io.emit('_new_registration', Object.keys(activeUsers));
+                        console.log(`${username} disconnected!`);
+                    }
 
                 }
-
             });
 
             this._socket.on('match_request', function (opponent) {
@@ -61,6 +75,8 @@ class Realtime {
                     } else {
                         socket.emit("_notification", {"message": `${opponent} currently playing with other!`})
                     }
+                } else {
+                    socket.emit("_notification", {"message": `${opponent} is not active`})
                 }
             });
 
@@ -68,24 +84,103 @@ class Realtime {
                 let from = data.from;
                 let to = data.to;
                 let game_id = uuid.v1();
+                let room_id = from+to;
+
+                activeRoomsGameIds[room_id] = game_id;
 
                 // create game
                 activeGames[game_id] = {
-                    [from]: 0,
-                    [to]: 0,
                     "from": from,
-                    "to": to
+                    "to": to,
+                    "room_id": room_id,
+                    "started_at": "22:00",
+                    "turn": from,
+                    "letters_pool": [],
+                    "state": {
+                        "11a": "v"
+                    },
+                    [from]: {
+                        "score": 0,
+                        "letters_pool": [],
+                        "time": "15:30",
+                        "words": []
+                    },
+                    [to]: {
+                        "score": 0,
+                        "letters_pool": [],
+                        "time": "13:12",
+                        "words": []
+                    }
+
                 }
 
-                // make these users unAvailable
+
+
+                // update active user's data
+                activeUsers[from]["connected_room_id"] = room_id;
+                activeUsers[to]["connected_room_id"] = room_id;
+
+                // make these users not available
                 activeUsers[from]["isAvailable"] = false;
                 activeUsers[to]["isAvailable"] = false;
 
-                console.log(activeGames);
+                activeUsers[from]["socket"].join(room_id);
+                activeUsers[to]["socket"].join(room_id);
+
+                activeUsers[from]["socket"].emit('_connect_room', room_id);
+                activeUsers[to]["socket"].emit('_connect_room', room_id);
+            });
+
+            this._socket.on('chat', function(data) {
+                // find room which current user connected and send message;
+                let current_user = activeUsersSocketIds[socket.id] ? activeUsers.hasOwnProperty(activeUsersSocketIds[socket.id]) ? activeUsers[activeUsersSocketIds[socket.id]] : null : null;
+
+                if(current_user != null) {
+                    let connected_room_id = current_user.connected_room_id;
+                    if(connected_room_id != null) {
+                        io.to(connected_room_id).emit('_chat', {
+                            "from": activeUsersSocketIds[socket.id],
+                            "message": data.message
+                        });
+                        console.log("message sebt!!")
+                    }
+                }
+            });
+
+            this._socket.on('game', function(data) {
+                // find room which current user connected and send message;
+                let current_user = activeUsersSocketIds[socket.id] ? activeUsers.hasOwnProperty(activeUsersSocketIds[socket.id]) ? activeUsers[activeUsersSocketIds[socket.id]] : null : null;
+
+                if(current_user != null) {
+                    let connected_room_id = current_user.connected_room_id;
+                    if(connected_room_id != null) {
+                        let current_user_username = activeUsersSocketIds[socket.id];
+                        let current_users_game_id = activeRoomsGameIds[connected_room_id];
+                        let current_game = activeGames[current_users_game_id];
+
+                        // check who's turn
+                        if(current_user_username !== current_game.turn) {
+                            current_user.socket.emit('_notification', 'Not your turn');
+                        } else {
+
+                        }
+                    }
+                }
             });
 
             console.log(`New socket connection: ${socket.id}`);
         });
+
+        this._io = io
+    }
+
+    sendMessageToRoom(room, data) {
+        if(this._io != null) {
+            this._io.to(room).emit(room, data);
+            console.log("room message sent..");
+        } else {
+            console.log("this._io is null");
+        }
     }
 
     sendEvent(event, data) {
