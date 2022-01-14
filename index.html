@@ -148,6 +148,14 @@
             messages.innerHTML = message_html;
             window.scrollTo(0, document.body.scrollHeight);
         });
+
+        socket.on("_new_letter_pool", function(data) {
+            let new_letter_pool_str =  data.letters_pool.join('');
+            message_html += `<li> <strong>[`+new_letter_pool_str+`]</strong> </li>`;
+            messages.innerHTML = message_html;
+            window.scrollTo(0, document.body.scrollHeight);
+            console.log(data.letters_pool)
+        });
     }
 
     form.addEventListener('submit', function(e) {
@@ -156,10 +164,12 @@
         let text = input.value;
         input.value = "";
 
-        socket.emit("chat", {
-            "message": text
+        socket.emit("game_check_word", {
+            "word": text
         });
     });
+
+
 
 
 
