@@ -152,6 +152,7 @@
         });
 
         socket.on("_chat", function(data) {
+            console.log(data)
             if(data.from !== nickname) {
                 message_html += `<li> <strong>`+data.from+`: </strong> `+data.message+` </li>`
             } else {
@@ -218,10 +219,7 @@
         let text = input.value;
         input.value = "";
 
-        socket.emit("game_check_word", {
-            "word": text,
-            "point": text.length * 2
-        });
+        socket.emit("chat", text);
     });
 
 

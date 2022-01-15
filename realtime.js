@@ -217,7 +217,7 @@ class Realtime {
 
             });
 
-            this._socket.on('chat', function(data) {
+            this._socket.on('chat', function(message) {
                 // find room which current user connected and send message;
                 let current_user = activeUsersSocketIds[socket.id] ? activeUsers.hasOwnProperty(activeUsersSocketIds[socket.id]) ? activeUsers[activeUsersSocketIds[socket.id]] : null : null;
 
@@ -226,8 +226,9 @@ class Realtime {
                     if(connected_room_id != null) {
                         io.to(connected_room_id).emit('_chat', {
                             "from": activeUsersSocketIds[socket.id],
-                            "message": data.message
+                            "message": message
                         });
+
                     }
                 }
             });
