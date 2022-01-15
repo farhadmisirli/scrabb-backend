@@ -8,7 +8,11 @@ class Realtime {
     }
 
     connect(server) {
-        let io = require('socket.io')(server);
+        let io = require('socket.io')(server,{
+            cors: {
+                origin: "*",
+            }
+        });
 
         io.on('connection', (socket) => {
             this._socket = socket;
