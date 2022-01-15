@@ -1,0 +1,63 @@
+{
+    "server": {
+        "register": {
+            "endpoint": "register",
+            "params": "username"
+
+        },
+        "match request": {
+            "endpoint": "match_request",
+            "params": "opponent"
+        },
+        "create match": {
+            "endpoint": "create_match",
+            "params": {
+                "from": "from_username",
+                "to": "to_username"
+            }
+        },
+        "game_check_word": {
+            "endpoint": "game_check_word",
+            "params": {
+                "word":  "word",
+                "point": 10
+            }
+        }
+    },
+
+    "client": {
+        "registration response": {
+            "endpoint": "_new_registration",
+            "params": ["array of users"]
+        },
+
+        "notification": {
+            "endpoint": "_notification",
+            "params": {"message": "msg here"}
+        },
+
+        "match request": {
+            "endpoint": "_match_request",
+            "params":  {
+                "from": "from_username",
+                "to": "to_username",
+                "message": "request message"
+            }
+        },
+        "chat": {
+            "endpoint": "_chat",
+            "params": {
+                "from": "from_username",
+                "message": "msg here.."
+            }
+        },
+        "_response": {
+            "endpoint": "_response",
+            "params": {
+                "status": true,
+                "letters_pool": ["array of letters"]
+            }
+        }
+
+    }
+}
