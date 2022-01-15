@@ -28,40 +28,77 @@ class Realtime {
                 // notify all users
                 io.emit('_new_registration', Object.keys(activeUsers));
                 console.log(`New user ${username} connected!`);
-
             });
 
             this._socket.on('disconnect', function() {
                 // check this user was playing
-                // if playing notify opponent, but not just remove from active users
-                if(activeUsersSocketIds.hasOwnProperty(socket.id)) {
-                    let username = activeUsersSocketIds[socket.id];
-                    if(activeUsers.hasOwnProperty(username)) {
-                        if(!activeUsers[username]["isAvailable"]) {
-                            Object.entries(activeGames).forEach(item =>  {
-                                let opponent = item[1].from === username ? item[1].to : item[1].to === username ? item[1].from : null;
+                let disconnected_user = activeUsersSocketIds[socket.id] ? activeUsers.hasOwnProperty(activeUsersSocketIds[socket.id]) ? activeUsers[activeUsersSocketIds[socket.id]] : null : null;
+                let disconnected_user_username = activeUsersSocketIds[socket.id];
+                if(disconnected_user && disconnected_user.connected_room_id !== null) {
+                    let current_users_game_id = activeRoomsGameIds[disconnected_user.connected_room_id];
+                    let current_game = activeGames[current_users_game_id];
+                    let opponent_username = current_game.from === disconnected_user_username ? current_game.to : current_game.from;
 
-                                if(opponent != null) {
-                                    let opponent_socket = activeUsers.hasOwnProperty(opponent) ? activeUsers[opponent].socket : null;
+                    current_game.finished_at = "current datetime";
+                    current_game.turn = null;
+                    current_game.winner = opponent_username;
 
-                                    if(opponent_socket != null) {
-                                        opponent_socket.emit('_notification', {
-                                            "message": `${username} left game!`
-                                        });
-                                    }
-                                }
-
-                            })
+                    io.to(disconnected_user.connected_room_id).emit("_game_state", {
+                        "state": current_game.state,
+                        "letters_pool": current_game.letters_pool,
+                        "turn": current_game.turn,
+                        "started_at": current_game.started_at,
+                        "finished_at": current_game.finished_at,
+                        "winner": current_game.winner,
+                        [disconnected_user_username]: {
+                            "score": current_game[disconnected_user_username].score,
+                        },
+                        [opponent_username]: {
+                            "score": current_game[opponent_username].score,
                         }
-
-                        delete activeUsers[username];
-
-                        // notify all users about user update
-                        io.emit('_new_registration', Object.keys(activeUsers));
-                        console.log(`${username} disconnected!`);
-                    }
-
+                    });
                 }
+
+                delete activeUsers[disconnected_user_username];
+
+                // notify all users about user update
+                io.emit('_new_registration', Object.keys(activeUsers));
+                console.log(`${disconnected_user_username} disconnected!`);
+
+
+                // if playing notify opponent, but not just remove from active users
+                // if(activeUsersSocketIds.hasOwnProperty(socket.id)) {
+                //     let username = activeUsersSocketIds[socket.id];
+                //     if(activeUsers.hasOwnProperty(username)) {
+                //         if(!activeUsers[username]["isAvailable"]) {
+                //             Object.entries(activeGames).forEach(item =>  {
+                //                 let opponent = item[1].from === username ? item[1].to : item[1].to === username ? item[1].from : null;
+                //
+                //                 if(opponent != null) {
+                //                     let opponent_socket = activeUsers.hasOwnProperty(opponent) ? activeUsers[opponent].socket : null;
+                //
+                //                     if(opponent_socket != null) {
+                //                         // stop game and set opponent as winner
+                //
+                //
+                //
+                //                         opponent_socket.emit('_notification', {
+                //                             "message": `${username} left game!`
+                //                         });
+                //                     }
+                //                 }
+                //
+                //             })
+                //         }
+                //
+                //         delete activeUsers[username];
+                //
+                //         // notify all users about user update
+                //         io.emit('_new_registration', Object.keys(activeUsers));
+                //         console.log(`${username} disconnected!`);
+                //     }
+                //
+                // }
             });
 
             this._socket.on('match_request', function (opponent) {
@@ -72,7 +109,7 @@ class Realtime {
                             "to": opponent,
                             "message": socket.username+" wants to make match with u!"
                         });
-                    } else {
+                    }else {
                         socket.emit("_notification", {"message": `${opponent} currently playing with other!`})
                     }
                 } else {
@@ -86,66 +123,94 @@ class Realtime {
                 let game_id = uuid.v1();
                 let room_id = from+to;
 
-                activeRoomsGameIds[room_id] = game_id;
+                if(activeUsers[from]['isAvailable'] && activeUsers[to]['isAvailable']) {
+                    activeRoomsGameIds[room_id] = game_id;
 
-                // create game
-                activeGames[game_id] = {
-                    "from": from,
-                    "to": to,
-                    "room_id": room_id,
-                    "started_at": "22:00",
-                    "turn": to,
-                    "letters_pool": [
-                        'Z' ,'A','A','A','A','A','A','A','A','A' ,'B','B','B', 'C',   'C', 'Ç','Ç','Ç'
-                        // 'D','D','D','D' ,'E','E','E','E','E','E','E','K',
-                        // 'G','G','Ğ' ,'H','H' ,'İ','İ','İ','İ','İ','İ','I','I','J','J', 'K',
-                        // 'L','L','L','L' ,'M','M','N','N','N','N','N','N','O','O','Ö','Ö','Ö','O',
-                        // 'P','P', 'Q', 'Q', 'Q','R','R','R','R','R','R','S','S','Ş','Ş','T','T','T','T','T',
-                        // 'U','U','Ü','Ü' ,'V','V', 'X', 'Y', 'Y', 'Ə','Ə','Ə','Ə','Ə','Ə','Ə'
-                    ],
-                    "state": {
-                        "11a": "v"
-                    },
-                    [from]: {
-                        "score": 0,
-                        "letters_pool": [],
-                        "time": "15:30",
-                        "words": []
-                    },
-                    [to]: {
-                        "score": 0,
-                        "letters_pool": [],
-                        "time": "13:12",
-                        "words": []
+                    // create game
+                    activeGames[game_id] = {
+                        "from": from,
+                        "to": to,
+                        "room_id": room_id,
+                        "started_at": "22:00",
+                        "finished_at": null,
+                        "winner": null,
+                        "turn": to,
+                        "letters_pool": [
+                            'Z' ,'A','A','A','A','A','A','A','A','A' ,'B','B','B', 'C',   'C', 'Ç','Ç','Ç',
+                            'D','D','D','D' ,'E','E','E','E','E','E','E','K',
+                            // 'G','G','Ğ' ,'H','H' ,'İ','İ','İ','İ','İ','İ','I','I','J','J', 'K',
+                            // 'L','L','L','L' ,'M','M','N','N','N','N','N','N','O','O','Ö','Ö','Ö','O',
+                            // 'P','P', 'Q', 'Q', 'Q','R','R','R','R','R','R','S','S','Ş','Ş','T','T','T','T','T',
+                            // 'U','U','Ü','Ü' ,'V','V', 'X', 'Y', 'Y', 'Ə','Ə','Ə','Ə','Ə','Ə','Ə'
+                        ],
+                        "state": {
+                            "11a": "v"
+                        },
+                        [from]: {
+                            "score": 0,
+                            "letters_pool": [],
+                            "time": "15:30",
+                            "words": []
+                        },
+                        [to]: {
+                            "score": 0,
+                            "letters_pool": [],
+                            "time": "13:12",
+                            "words": []
+                        }
                     }
+
+                    // update active user's data
+                    activeUsers[from]["connected_room_id"] = room_id;
+                    activeUsers[to]["connected_room_id"] = room_id;
+
+                    // make these users not available
+                    activeUsers[from]["isAvailable"] = false;
+                    activeUsers[to]["isAvailable"] = false;
+
+                    activeUsers[from]["socket"].join(room_id);
+                    activeUsers[to]["socket"].join(room_id);
+
+                    activeUsers[from]["socket"].emit('_connect_room', room_id);
+                    activeUsers[to]["socket"].emit('_connect_room', room_id);
+
+                    // generate letters pool
+                    let new_generated_pools = fillUsersLettersPool(activeGames[game_id].letters_pool, [], 7);
+                    activeGames[game_id][from].letters_pool = new_generated_pools.new_user_letters_pool;
+                    activeGames[game_id].letters_pool = new_generated_pools.new_common_letters_pool;
+
+                    new_generated_pools = fillUsersLettersPool(activeGames[game_id].letters_pool, [], 7);
+                    activeGames[game_id][to].letters_pool = new_generated_pools.new_user_letters_pool;
+                    activeGames[game_id].letters_pool = new_generated_pools.new_common_letters_pool;
+
+                    activeUsers[from]["socket"].emit('_new_letter_pool', {"letters_pool": activeGames[game_id][from].letters_pool});
+                    activeUsers[to]["socket"].emit('_new_letter_pool', {"letters_pool": activeGames[game_id][to].letters_pool});
+
+                    // send current game state to room
+                    io.to(room_id).emit("_game_state", {
+                        "state": activeGames[game_id].state,
+                        "letters_pool": activeGames[game_id].letters_pool,
+                        "turn": activeGames[game_id].turn,
+                        "started_at": activeGames[game_id].started_at,
+                        "finished_at": activeGames[game_id].finished_at,
+                        "winner": activeGames[game_id].winner,
+                        [from]: {
+                            "score": activeGames[game_id][from].score,
+                        },
+                        [to]: {
+                            "score": activeGames[game_id][to].score,
+                        }
+                    });
+                } else {
+                    let notAvailableUser = activeUsers[from]['isAvailable'] ? to : from;
+                    let mustNotifyUser = notAvailableUser === from ? to : from;
+                    activeUsers[mustNotifyUser]["socket"].emit("_notification", {
+                        "message": `${notAvailableUser} stareted to play`
+                    });
 
                 }
 
-                // update active user's data
-                activeUsers[from]["connected_room_id"] = room_id;
-                activeUsers[to]["connected_room_id"] = room_id;
 
-                // make these users not available
-                activeUsers[from]["isAvailable"] = false;
-                activeUsers[to]["isAvailable"] = false;
-
-                activeUsers[from]["socket"].join(room_id);
-                activeUsers[to]["socket"].join(room_id);
-
-                activeUsers[from]["socket"].emit('_connect_room', room_id);
-                activeUsers[to]["socket"].emit('_connect_room', room_id);
-
-                // generate letters pool
-                let new_generated_pools = fillUsersLettersPool(activeGames[game_id].letters_pool, [], 7);
-                activeGames[game_id][from].letters_pool = new_generated_pools.new_user_letters_pool;
-                activeGames[game_id].letters_pool = new_generated_pools.new_common_letters_pool;
-
-                new_generated_pools = fillUsersLettersPool(activeGames[game_id].letters_pool, [], 7);
-                activeGames[game_id][to].letters_pool = new_generated_pools.new_user_letters_pool;
-                activeGames[game_id].letters_pool = new_generated_pools.new_common_letters_pool;
-
-                activeUsers[from]["socket"].emit('_new_letter_pool', {"letters_pool": activeGames[game_id][from].letters_pool});
-                activeUsers[to]["socket"].emit('_new_letter_pool', {"letters_pool": activeGames[game_id][to].letters_pool});
             });
 
             this._socket.on('chat', function(data) {
@@ -159,7 +224,6 @@ class Realtime {
                             "from": activeUsersSocketIds[socket.id],
                             "message": data.message
                         });
-                        console.log("message sebt!!")
                     }
                 }
             });
@@ -174,12 +238,12 @@ class Realtime {
                         let current_user_username = activeUsersSocketIds[socket.id];
                         let current_users_game_id = activeRoomsGameIds[connected_room_id];
                         let current_game = activeGames[current_users_game_id];
+                        let opponent_username = current_game.from === current_user_username ? current_game.to : current_game.from;
 
                         // check who's turn
                         if(current_user_username !== current_game.turn) {
                             current_user.socket.emit('_notification', {"message": 'Not your turn'});
                         } else {
-
                             let user_letter_pool = [...current_game[current_user_username].letters_pool];
                             let wrong_letter_found = false;
 
@@ -195,41 +259,114 @@ class Realtime {
                                 });
 
                                 if(!wrong_letter_found) {
-                                    let number_of_required_letters = data.word.length;
+                                    // calculate score
+                                    current_game[current_user_username].score += data.point;
 
-                                    if(current_game.letters_pool.length > 0) {
-                                        let new_generated_pools = fillUsersLettersPool(current_game.letters_pool, user_letter_pool, number_of_required_letters);
+                                    // check game ended
+                                    if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
+                                        let winner =  current_game[current_user_username].score > current_game[opponent_username].score ? current_user_username : opponent_username;
 
-                                        current_game[current_user_username].letters_pool = new_generated_pools.new_user_letters_pool;
-                                        current_game.letters_pool = new_generated_pools.new_common_letters_pool;
-                                    } else {
-                                        if(current_game.letters_pool.length === 0) {
-                                            current_game[current_user_username].letters_pool = [];
+                                        // send notification(game states) to room that game ended
+                                        current_game.finished_at = "current datetime";
+                                        current_game.turn = null;
+                                        current_game.winner = winner;
+
+                                        current_game[current_user_username].letters_pool = user_letter_pool;
+                                        // send response to user
+                                        current_user.socket.emit('_response', {
+                                            "status": true,
+                                            "letters_pool": current_game[current_user_username].letters_pool
+                                        });
+
+                                        // io.to(connected_room_id).emit("_game_state", {
+                                        //     "winner": current_game[current_user_username].score > current_game[opponent_username].score ? current_user_username : opponent_username,
+                                        //     "state": current_game
+                                        // });
+                                        // send current game state to room
+                                        io.to(connected_room_id).emit("_game_state", {
+                                            "state": current_game.state,
+                                            "letters_pool": current_game.letters_pool,
+                                            "turn": current_game.turn,
+                                            "started_at": current_game.started_at,
+                                            "finished_at": current_game.finished_at,
+                                            "winner": current_game.winner,
+                                            [current_user_username]: {
+                                                "score": current_game[current_user_username].score,
+                                            },
+                                            [opponent_username]: {
+                                                "score": current_game[opponent_username].score,
+                                            }
+                                        });
+
+                                        console.log("game ended");
+
+                                    }
+                                    else {
+                                        // Change turn
+                                        current_game.turn = opponent_username;
+
+                                        // Fill letters pool
+                                        let number_of_required_letters = data.word.length;
+                                        if(current_game.letters_pool.length > 0) {
+                                            let new_generated_pools = fillUsersLettersPool(current_game.letters_pool, user_letter_pool, number_of_required_letters);
+                                            current_game[current_user_username].letters_pool = new_generated_pools.new_user_letters_pool;
+                                            current_game.letters_pool = new_generated_pools.new_common_letters_pool;
+                                        } else {
+                                            current_game[current_user_username].letters_pool = user_letter_pool;
                                         }
+
+                                        // send response to user
+                                        current_user.socket.emit('_response', {
+                                            "status": true,
+                                            "letters_pool": current_game[current_user_username].letters_pool
+                                        });
+
+                                        // send current game state to room
+                                        io.to(connected_room_id).emit("_game_state", {
+                                            "state": current_game.state,
+                                            "letters_pool": current_game.letters_pool,
+                                            "turn": current_game.turn,
+                                            "started_at": current_game.started_at,
+                                            "finished_at": current_game.finished_at,
+                                            "winner": current_game.winner,
+                                            [current_user_username]: {
+                                                "score": current_game[current_user_username].score,
+                                            },
+                                            [opponent_username]: {
+                                                "score": current_game[opponent_username].score,
+                                            }
+                                        });
+
+                                        console.log("game state changed");
+
+
+                                        // send current user new letter pool
+                                        // current_user.socket.emit('_new_letter_pool', {
+                                        //     "letters_pool": current_game[current_user_username].letters_pool
+                                        // });
+
+                                        // notify opponent about his turn
+                                        // activeUsers[opponent_username].socket.emit('_notification', {
+                                        //     "type": "turn",
+                                        //     "message": "Its your turn!"
+                                        // });
+
+                                        // send current game state to room
+                                        // io.to(connected_room_id).emit("_game_state", {
+                                        //     "letters_pool": current_game.letters_pool
+                                        // });
+
                                     }
 
-                                    // Change turn
-                                    current_game.turn = current_game.from === current_user_username ? current_game.to : current_game.from;
-
-                                    // send current user new letter pool
-                                    current_user.socket.emit('_new_letter_pool', {
-                                        "letters_pool": current_game[current_user_username].letters_pool
-                                    });
-
-                                    console.log("new letters pool send to user");
                                 } else {
-                                    // notify user about wrong letter
-                                    current_user.socket.emit('_notification', {"message":'Wrong letter'});
-                                    console.log({
-                                        "word": data.word,
-                                        "pool": current_game[current_user_username].letters_pool
-
-                                    })
+                                    current_user.socket.emit('_response', {
+                                        "status": false,
+                                        "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
+                                    });
                                 }
                             } else {
                                 current_user.socket.emit('_notification', {"message":'Wrong word'});
                             }
-
                         }
                     }
                 }
@@ -244,9 +381,6 @@ class Realtime {
     sendMessageToRoom(room, data) {
         if(this._io != null) {
             this._io.to(room).emit(room, data);
-            console.log("room message sent..");
-        } else {
-            console.log("this._io is null");
         }
     }
 
@@ -284,13 +418,11 @@ function getRandomNumber(min, max) {
 function fillUsersLettersPool(common_pool, current_pool, number_of_required_letters) {
     let random_letter_index = 0;
     if(number_of_required_letters > common_pool.length) {
-        console.log("here")
         for (let i = 0; i < common_pool.length; i++) {
             current_pool.push(common_pool[i]);
         }
         common_pool = []
     } else {
-        console.log('sds')
         for (let i = 0; i < number_of_required_letters; i++) {
             random_letter_index = getRandomNumber(0, common_pool.length-1);
             current_pool.push(common_pool[random_letter_index]);

@@ -61,7 +61,15 @@
 </head>
 <body>
 
-<bold><h3 id="currentUser">---</h3></bold>
+<bold style="margin-left: 10px">
+    <span style="color:red; font-size: 24px;" id="currentUser"> -- </span>
+    <span style="color: green; font-size: 20px" id="score">(0)</span>
+</bold>
+
+<div id="letters_pool" style="margin: 10px 0 0 10px; font-size: 24px;">
+
+</div>
+<hr>
 <div id="users_container">
 
 </div>
@@ -127,7 +135,13 @@
         });
 
         socket.on("_notification", function (data) {
-            alert(data.message);
+            if(data.hasOwnProperty('type')) {
+                if(data.type === "turn") {
+                    alert(data.message);
+                }
+            } else {
+                alert(data.message);
+            }
         });
 
         socket.on("_connect_room", function (room_id) {
@@ -135,7 +149,6 @@
             socket.on(room_id, function(data) {
                 alert(data);
             });
-            console.log(" connected to "+ room_id);
         });
 
         socket.on("_chat", function(data) {
@@ -150,11 +163,52 @@
         });
 
         socket.on("_new_letter_pool", function(data) {
-            let new_letter_pool_str =  data.letters_pool.join('');
-            message_html += `<li> <strong>[`+new_letter_pool_str+`]</strong> </li>`;
-            messages.innerHTML = message_html;
-            window.scrollTo(0, document.body.scrollHeight);
-            console.log(data.letters_pool)
+            if(Object.keys(data).length > 0) {
+                let new_letter_pool_str =  data.letters_pool.join('');
+                message_html += `<li> <strong>[`+new_letter_pool_str+`]</strong> </li>`;
+                messages.innerHTML = message_html;
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                console.log("empty data in  _new_letter_pool")
+            }
+        });
+
+        socket.on("_game_state", function(data) {
+            if(Object.keys(data).length > 0) {
+                if (data.letters_pool.length > 0) {
+                    letters_pool.innerHTML = `<strong > ` + data.letters_pool.join(' ') + ` </strong>`;
+                } else {
+                    letters_pool.innerHTML = `<strong style="color:red">EMPTY!</strong>`;
+                }
+
+                score.innerText = data[nickname].score;
+
+                if(data.finished_at !== null) {
+                    alert(data.winner === nickname ? "Winner" : "Loser");
+                }
+
+                if(data.turn === nickname) {
+                    alert("your turn");
+                }
+
+            } else {
+                console.log("empty data in  _game_state")
+            }
+        });
+
+        socket.on("_response", function(data) {
+            if(data.status) {
+                let new_letter_pool_str =  data.letters_pool.join('');
+                message_html += `<li> <strong>[`+new_letter_pool_str+`]</strong> </li>`;
+                messages.innerHTML = message_html;
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                alert(data.message);
+            }
+        });
+
+        socket.on("_game_ended", function(data) {
+
         });
     }
 
@@ -165,10 +219,10 @@
         input.value = "";
 
         socket.emit("game_check_word", {
-            "word": text
+            "word": text,
+            "point": text.length * 2
         });
     });
-
 
 
 
