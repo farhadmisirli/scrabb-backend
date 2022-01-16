@@ -282,7 +282,8 @@ class Realtime {
                                         // send response to user
                                         current_user.socket.emit('_response', {
                                             "status": true,
-                                            "letters_pool": current_game[current_user_username].letters_pool
+                                            "letters_pool": current_game[current_user_username].letters_pool,
+
                                         });
 
                                         // send current game state to room
@@ -367,7 +368,8 @@ class Realtime {
                             } else {
                                 current_user.socket.emit('_response', {
                                     "status": false,
-                                    "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
+                                    "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-'),
+                                    "wrong_words": ['Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')]
                                 });
                             }
                         }
