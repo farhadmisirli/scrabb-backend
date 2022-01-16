@@ -113,6 +113,7 @@ class Realtime {
                             "to": opponent,
                             "message": socket.username+" wants to make match with u!"
                         });
+                        console.log("match request sent to "+opponent)
                     }else {
                         socket.emit("_notification", {"message": `${opponent} currently playing with other!`})
                     }

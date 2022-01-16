@@ -35,15 +35,6 @@
             "endpoint": "_notification",
             "params": {"message": "msg here"}
         },
-
-        "match request": {
-            "endpoint": "_match_request",
-            "params":  {
-                "from": "from_username",
-                "to": "to_username",
-                "message": "request message"
-            }
-        },
         "chat": {
             "endpoint": "_chat",
             "params": {
@@ -57,6 +48,10 @@
                 "status": true,
                 "letters_pool": ["array of letters"]
             }
+        },
+        "match request": {
+            "endpoint": "_match_request",
+            "params": {"message": "msg here"}
         }
 
     }
