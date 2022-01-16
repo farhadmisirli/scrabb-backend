@@ -196,6 +196,7 @@
         });
 
         socket.on("_response", function(data) {
+            console.log(data);
             if(data.status) {
                 let new_letter_pool_str =  data.letters_pool.join('');
                 message_html += `<li> <strong>[`+new_letter_pool_str+`]</strong> </li>`;
@@ -221,11 +222,14 @@
         let text = input.value;
         input.value = "";
 
-        socket.emit("chat", text);
+        let words_arr = text.split(',');
+
+        socket.emit("game_check_word", {
+            "used_letters": Array.from(words_arr[0]),
+            "words": words_arr,
+            "point": 12
+        });
     });
-
-
-
 
 </script>
 

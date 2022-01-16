@@ -22,9 +22,11 @@
     "body-parser": "^1.19.1",
     "dotenv": "^12.0.4",
     "express": "^4.17.2",
+    "mysql": "^2.18.1",
     "nodemon": "^2.0.15",
     "request": "^2.88.2",
     "socket.io": "^4.4.1",
+    "sync-mysql": "^3.0.1",
     "uuid": "^8.3.2"
   }
 }

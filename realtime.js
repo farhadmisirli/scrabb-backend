@@ -1,6 +1,8 @@
 let connection = null;
 const {activeUsers, activeGames, activeUsersSocketIds, activeRoomsGameIds} = require("./db");
 const uuid = require('uuid');
+const {getWords, getWordsByArray} = require("./services/GameService");
+
 class Realtime {
     constructor() {
         this._socket = null;
@@ -151,12 +153,12 @@ class Realtime {
                         "winner": null,
                         "turn": to,
                         "letters_pool": [
-                            'Z' ,'A','A','A','A','A','A','A','A','A' ,'B','B','B', 'C',   'C', 'Ç','Ç','Ç',
-                            'D','D','D','D' ,'E','E','E','E','E','E','E','K',
-                            // 'G','G','Ğ' ,'H','H' ,'İ','İ','İ','İ','İ','İ','I','I','J','J', 'K',
-                            // 'L','L','L','L' ,'M','M','N','N','N','N','N','N','O','O','Ö','Ö','Ö','O',
-                            // 'P','P', 'Q', 'Q', 'Q','R','R','R','R','R','R','S','S','Ş','Ş','T','T','T','T','T',
-                            // 'U','U','Ü','Ü' ,'V','V', 'X', 'Y', 'Y', 'Ə','Ə','Ə','Ə','Ə','Ə','Ə'
+                            'z' ,'a','a','a','a','a','a','a','a','a' ,'b','b','b', 'c', 'c', 'ç','ç','ç',
+                            'd','d','d','d' ,'e','e','e','e','e','e','e','k',
+                            'g','g','ğ' ,'h','h' ,'i','i','i','i','i','i','ı','ı','j','j', 'k',
+                            'l','l','l','l' ,'m','m','n','n','n','n','n','n','o','o','ö','ö','ö','o',
+                            'p','p', 'q', 'q', 'q','r','r','r','r','r','r','s','s','ş','ş','t','t','t','t','t',
+                            'u','u','ü','ü' ,'v','v', 'x', 'y', 'y', 'ə','ə','ə','ə','ə','ə','ə'
                         ],
                         "state": {
                             "11a": "v"
@@ -209,6 +211,8 @@ class Realtime {
                         "started_at": activeGames[game_id].started_at,
                         "finished_at": activeGames[game_id].finished_at,
                         "winner": activeGames[game_id].winner,
+                        "from": activeGames[game_id].from,
+                        "to": activeGames[game_id].to,
                         [from]: {
                             "score": activeGames[game_id][from].score,
                         },
@@ -257,6 +261,7 @@ class Realtime {
                 if(current_user != null) {
                     let connected_room_id = current_user.connected_room_id;
                     if(connected_room_id != null) {
+
                         let current_user_username = activeUsersSocketIds[socket.id];
                         let current_users_game_id = activeRoomsGameIds[connected_room_id];
                         let current_game = activeGames[current_users_game_id];
@@ -269,18 +274,22 @@ class Realtime {
                             let user_letter_pool = [...current_game[current_user_username].letters_pool];
                             let wrong_letter_found = false;
 
-                            if(checkWord(data.word)) {
-                                Array.from(data.word).forEach((letter) => {
-                                    let index =  user_letter_pool.indexOf(letter);
-                                    if (index > -1) {
-                                        user_letter_pool.splice(index, 1);
-                                    } else {
-                                        wrong_letter_found = true;
-                                        return -1;
-                                    }
-                                });
+                            // check letters
+                            data.used_letters.forEach((letter) => {
+                                let index =  user_letter_pool.indexOf(letter);
+                                if (index > -1) {
+                                    user_letter_pool.splice(index, 1);
+                                } else {
+                                    wrong_letter_found = true;
+                                    return -1;
+                                }
+                            });
 
-                                if(!wrong_letter_found) {
+                            if(!wrong_letter_found) {
+
+                                // check words
+                                let wrong_words = checkWordsArray(data.words);
+                                if(wrong_words.length === 0) {
                                     // calculate score
                                     current_game[current_user_username].score += data.point;
 
@@ -300,10 +309,6 @@ class Realtime {
                                             "letters_pool": current_game[current_user_username].letters_pool
                                         });
 
-                                        // io.to(connected_room_id).emit("_game_state", {
-                                        //     "winner": current_game[current_user_username].score > current_game[opponent_username].score ? current_user_username : opponent_username,
-                                        //     "state": current_game
-                                        // });
                                         // send current game state to room
                                         io.to(connected_room_id).emit("_game_state", {
                                             "state": current_game.state,
@@ -312,6 +317,8 @@ class Realtime {
                                             "started_at": current_game.started_at,
                                             "finished_at": current_game.finished_at,
                                             "winner": current_game.winner,
+                                            "from": current_game.from,
+                                            "to": current_game.to,
                                             [current_user_username]: {
                                                 "score": current_game[current_user_username].score,
                                             },
@@ -319,16 +326,13 @@ class Realtime {
                                                 "score": current_game[opponent_username].score,
                                             }
                                         });
-
-                                        console.log("game ended");
-
                                     }
                                     else {
                                         // Change turn
                                         current_game.turn = opponent_username;
 
                                         // Fill letters pool
-                                        let number_of_required_letters = data.word.length;
+                                        let number_of_required_letters = data.used_letters.length;
                                         if(current_game.letters_pool.length > 0) {
                                             let new_generated_pools = fillUsersLettersPool(current_game.letters_pool, user_letter_pool, number_of_required_letters);
                                             current_game[current_user_username].letters_pool = new_generated_pools.new_user_letters_pool;
@@ -360,38 +364,125 @@ class Realtime {
                                         });
 
                                         console.log("game state changed");
-
-
-                                        // send current user new letter pool
-                                        // current_user.socket.emit('_new_letter_pool', {
-                                        //     "letters_pool": current_game[current_user_username].letters_pool
-                                        // });
-
-                                        // notify opponent about his turn
-                                        // activeUsers[opponent_username].socket.emit('_notification', {
-                                        //     "type": "turn",
-                                        //     "message": "Its your turn!"
-                                        // });
-
-                                        // send current game state to room
-                                        // io.to(connected_room_id).emit("_game_state", {
-                                        //     "letters_pool": current_game.letters_pool
-                                        // });
-
                                     }
-
                                 } else {
                                     current_user.socket.emit('_response', {
                                         "status": false,
-                                        "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
+                                        "message":'Wrong words',
+                                        "wrong_words": wrong_words
                                     });
                                 }
                             } else {
-                                current_user.socket.emit('_notification', {"message":'Wrong word'});
+                                current_user.socket.emit('_response', {
+                                    "status": false,
+                                    "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
+                                });
                             }
+
+
+                            // if(checkWord(data.word)) {
+                            //     Array.from(data.word).forEach((letter) => {
+                            //         let index =  user_letter_pool.indexOf(letter);
+                            //         if (index > -1) {
+                            //             user_letter_pool.splice(index, 1);
+                            //         } else {
+                            //             wrong_letter_found = true;
+                            //             return -1;
+                            //         }
+                            //     });
+                            //
+                            //     if(!wrong_letter_found) {
+                            //         // calculate score
+                            //         current_game[current_user_username].score += data.point;
+                            //
+                            //         // check game ended
+                            //         if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
+                            //             let winner =  current_game[current_user_username].score > current_game[opponent_username].score ? current_user_username : opponent_username;
+                            //
+                            //             // send notification(game states) to room that game ended
+                            //             current_game.finished_at = "current datetime";
+                            //             current_game.turn = null;
+                            //             current_game.winner = winner;
+                            //
+                            //             current_game[current_user_username].letters_pool = user_letter_pool;
+                            //             // send response to user
+                            //             current_user.socket.emit('_response', {
+                            //                 "status": true,
+                            //                 "letters_pool": current_game[current_user_username].letters_pool
+                            //             });
+                            //
+                            //             // send current game state to room
+                            //             io.to(connected_room_id).emit("_game_state", {
+                            //                 "state": current_game.state,
+                            //                 "letters_pool": current_game.letters_pool,
+                            //                 "turn": current_game.turn,
+                            //                 "started_at": current_game.started_at,
+                            //                 "finished_at": current_game.finished_at,
+                            //                 "winner": current_game.winner,
+                            //                 [current_user_username]: {
+                            //                     "score": current_game[current_user_username].score,
+                            //                 },
+                            //                 [opponent_username]: {
+                            //                     "score": current_game[opponent_username].score,
+                            //                 }
+                            //             });
+                            //
+                            //             console.log("game ended");
+                            //
+                            //         }
+                            //         else {
+                            //             // Change turn
+                            //             current_game.turn = opponent_username;
+                            //
+                            //             // Fill letters pool
+                            //             let number_of_required_letters = data.word.length;
+                            //             if(current_game.letters_pool.length > 0) {
+                            //                 let new_generated_pools = fillUsersLettersPool(current_game.letters_pool, user_letter_pool, number_of_required_letters);
+                            //                 current_game[current_user_username].letters_pool = new_generated_pools.new_user_letters_pool;
+                            //                 current_game.letters_pool = new_generated_pools.new_common_letters_pool;
+                            //             } else {
+                            //                 current_game[current_user_username].letters_pool = user_letter_pool;
+                            //             }
+                            //
+                            //             // send response to user
+                            //             current_user.socket.emit('_response', {
+                            //                 "status": true,
+                            //                 "letters_pool": current_game[current_user_username].letters_pool
+                            //             });
+                            //
+                            //             // send current game state to room
+                            //             io.to(connected_room_id).emit("_game_state", {
+                            //                 "state": current_game.state,
+                            //                 "letters_pool": current_game.letters_pool,
+                            //                 "turn": current_game.turn,
+                            //                 "started_at": current_game.started_at,
+                            //                 "finished_at": current_game.finished_at,
+                            //                 "winner": current_game.winner,
+                            //                 [current_user_username]: {
+                            //                     "score": current_game[current_user_username].score,
+                            //                 },
+                            //                 [opponent_username]: {
+                            //                     "score": current_game[opponent_username].score,
+                            //                 }
+                            //             });
+                            //
+                            //             console.log("game state changed");
+                            //         }
+                            //
+                            //     } else {
+                            //         current_user.socket.emit('_response', {
+                            //             "status": false,
+                            //             "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
+                            //         });
+                            //     }
+                            // } else {
+                            //     current_user.socket.emit('_notification', {"message":'Wrong word'});
+                            // }
                         }
                     }
                 }
+
+
             });
 
             console.log(`New socket connection: ${socket.id}`);
@@ -430,7 +521,19 @@ class Realtime {
 }
 
 function checkWord(word, username) {
-    return true;
+    let result = getWords(word);
+    return result.length > 0;
+}
+
+function checkWordsArray(words) {
+    let words_response = getWordsByArray(words);
+    let words_response_arr = words_response.map(i => i.name);
+
+    if(words_response_arr.length !== words.length) {
+        return words.filter(x => !words_response_arr.includes(x));
+    } else {
+        return [];
+    }
 }
 
 function getRandomNumber(min, max) {
@@ -457,6 +560,7 @@ function fillUsersLettersPool(common_pool, current_pool, number_of_required_lett
         "new_common_letters_pool": common_pool
     }
 }
+
 module.exports = {
     connect: Realtime.init,
     connection: Realtime.getConnection

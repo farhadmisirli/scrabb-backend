@@ -19,7 +19,8 @@
         "game_check_word": {
             "endpoint": "game_check_word",
             "params": {
-                "word":  "word",
+                "used_letters":  ["array of letters"],
+                "words": ["array of words"],
                 "point": 10
             }
         },
@@ -97,6 +98,7 @@
             "params": {
                 "message": "msg here"
             }
-        }
+        },
+
     }
 }
