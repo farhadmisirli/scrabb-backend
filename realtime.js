@@ -232,7 +232,11 @@ class Realtime {
                         });
 
                         console.log(`message sent to room. room_id: { ${connected_room_id} }  message : { ${message} }`);
+                    } else {
+                        console.log("room id not found");
                     }
+                } else {
+                    console.log("user not found");
                 }
             });
 

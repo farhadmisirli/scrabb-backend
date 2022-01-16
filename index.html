@@ -146,12 +146,12 @@
             }
         });
 
-        socket.on("_connect_room", function (room_id) {
-            connected_room = room_id;
-            socket.on(room_id, function(data) {
-                alert(data);
-            });
-        });
+        // socket.on("_connect_room", function (room_id) {
+        //     connected_room = room_id;
+        //     socket.on(room_id, function(data) {
+        //         alert(data);
+        //     });
+        // });
 
         socket.on("_chat", function(data) {
             console.log(data)
