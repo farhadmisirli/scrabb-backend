@@ -45,13 +45,44 @@
         "_response": {
             "endpoint": "_response",
             "params": {
-                "status": true,
-                "letters_pool": ["array of letters"]
+                "status": "if true ? your move is correct : wrong move",
+                "letters_pool": ["new letters pool"]
             }
         },
         "match request": {
             "endpoint": "_match_request",
-            "params": {"message": "msg here"}
+            "params": {
+                "message": "msg here",
+                "from": "from",
+                "to": "to"
+            }
+        },
+        "_connect_room" : {
+            "endpoint": "_connect_room",
+            "params": "room_id"
+        },
+        "_new_letter_pool": {
+            "endpoint": "_new_letter_pool",
+            "params": {
+                "letters_pool": ["array of letters"]
+            }
+        },
+        "_game_state": {
+            "endpoint": "_game_state",
+            "params": {
+                "state": "state of borad",
+                "letters_pool": ["array of letters"],
+                "turn": "opponent username",
+                "started_at": "time",
+                "finished_at": "time",
+                "winner": "winner username",
+                "from": {
+                    "score": "10"
+                },
+                "to": {
+                    "score": "15"
+                }
+            }
         }
 
     }
