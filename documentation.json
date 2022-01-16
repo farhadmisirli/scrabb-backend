@@ -21,7 +21,8 @@
             "params": {
                 "used_letters":  ["array of letters"],
                 "words": ["array of words"],
-                "point": 10
+                "point": 10,
+                "state": ["array of objects"]
             }
         },
         "match_request_cancelled": {

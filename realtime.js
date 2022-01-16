@@ -73,40 +73,6 @@ class Realtime {
                 io.emit('_new_registration', Object.keys(activeUsers));
                 console.log(`${disconnected_user_username} disconnected!`);
 
-
-                // if playing notify opponent, but not just remove from active users
-                // if(activeUsersSocketIds.hasOwnProperty(socket.id)) {
-                //     let username = activeUsersSocketIds[socket.id];
-                //     if(activeUsers.hasOwnProperty(username)) {
-                //         if(!activeUsers[username]["isAvailable"]) {
-                //             Object.entries(activeGames).forEach(item =>  {
-                //                 let opponent = item[1].from === username ? item[1].to : item[1].to === username ? item[1].from : null;
-                //
-                //                 if(opponent != null) {
-                //                     let opponent_socket = activeUsers.hasOwnProperty(opponent) ? activeUsers[opponent].socket : null;
-                //
-                //                     if(opponent_socket != null) {
-                //                         // stop game and set opponent as winner
-                //
-                //
-                //
-                //                         opponent_socket.emit('_notification', {
-                //                             "message": `${username} left game!`
-                //                         });
-                //                     }
-                //                 }
-                //
-                //             })
-                //         }
-                //
-                //         delete activeUsers[username];
-                //
-                //         // notify all users about user update
-                //         io.emit('_new_registration', Object.keys(activeUsers));
-                //         console.log(`${username} disconnected!`);
-                //     }
-                //
-                // }
             });
 
             this._socket.on('match_request', function (opponent) {
@@ -155,16 +121,14 @@ class Realtime {
                         "winner": null,
                         "turn": to,
                         "letters_pool": [
-                            'Z' ,'A','A','A','A','A','A','A','A','A' ,'B','B','B', 'C',   'C', 'Ç','Ç','Ç',
+                            'Z', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'Ç', 'Ç', 'Ç',
                             'D','D','D','D' ,'E','E','E','E','E','E','E','K',
                             'G','G','Ğ' ,'H','H' ,'İ','İ','İ','İ','İ','İ','I','I','J','J', 'K',
                             'L','L','L','L' ,'M','M','N','N','N','N','N','N','O','O','Ö','Ö','Ö','O',
                             'P','P', 'Q', 'Q', 'Q','R','R','R','R','R','R','S','S','Ş','Ş','T','T','T','T','T',
                             'U','U','Ü','Ü' ,'V','V', 'X', 'Y', 'Y', 'Ə','Ə','Ə','Ə','Ə','Ə','Ə'
                         ],
-                        "state": {
-                            "11a": "v"
-                        },
+                        "state": [],
                         [from]: {
                             "score": 0,
                             "letters_pool": [],
@@ -231,8 +195,6 @@ class Realtime {
                         "message": `${notAvailableUser} stareted to play`
                     });
                 }
-
-
             });
 
             this._socket.on('chat', function(message) {
@@ -263,7 +225,6 @@ class Realtime {
                 if(current_user != null) {
                     let connected_room_id = current_user.connected_room_id;
                     if(connected_room_id != null) {
-
                         let current_user_username = activeUsersSocketIds[socket.id];
                         let current_users_game_id = activeRoomsGameIds[connected_room_id];
                         let current_game = activeGames[current_users_game_id];
@@ -288,12 +249,13 @@ class Realtime {
                             });
 
                             if(!wrong_letter_found) {
-
                                 // check words
                                 let wrong_words = checkWordsArray(data.words);
                                 if(wrong_words.length === 0) {
                                     // calculate score
                                     current_game[current_user_username].score += data.point;
+
+                                    current_game.state = data.state;
 
                                     // check game ended
                                     if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
@@ -328,7 +290,8 @@ class Realtime {
                                                 "score": current_game[opponent_username].score,
                                             }
                                         });
-                                    } else {
+                                    }
+                                    else {
                                         // Change turn
                                         current_game.turn = opponent_username;
 
@@ -381,106 +344,6 @@ class Realtime {
                                     "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
                                 });
                             }
-
-
-                            // if(checkWord(data.word)) {
-                            //     Array.from(data.word).forEach((letter) => {
-                            //         let index =  user_letter_pool.indexOf(letter);
-                            //         if (index > -1) {
-                            //             user_letter_pool.splice(index, 1);
-                            //         } else {
-                            //             wrong_letter_found = true;
-                            //             return -1;
-                            //         }
-                            //     });
-                            //
-                            //     if(!wrong_letter_found) {
-                            //         // calculate score
-                            //         current_game[current_user_username].score += data.point;
-                            //
-                            //         // check game ended
-                            //         if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
-                            //             let winner =  current_game[current_user_username].score > current_game[opponent_username].score ? current_user_username : opponent_username;
-                            //
-                            //             // send notification(game states) to room that game ended
-                            //             current_game.finished_at = "current datetime";
-                            //             current_game.turn = null;
-                            //             current_game.winner = winner;
-                            //
-                            //             current_game[current_user_username].letters_pool = user_letter_pool;
-                            //             // send response to user
-                            //             current_user.socket.emit('_response', {
-                            //                 "status": true,
-                            //                 "letters_pool": current_game[current_user_username].letters_pool
-                            //             });
-                            //
-                            //             // send current game state to room
-                            //             io.to(connected_room_id).emit("_game_state", {
-                            //                 "state": current_game.state,
-                            //                 "letters_pool": current_game.letters_pool,
-                            //                 "turn": current_game.turn,
-                            //                 "started_at": current_game.started_at,
-                            //                 "finished_at": current_game.finished_at,
-                            //                 "winner": current_game.winner,
-                            //                 [current_user_username]: {
-                            //                     "score": current_game[current_user_username].score,
-                            //                 },
-                            //                 [opponent_username]: {
-                            //                     "score": current_game[opponent_username].score,
-                            //                 }
-                            //             });
-                            //
-                            //             console.log("game ended");
-                            //
-                            //         }
-                            //         else {
-                            //             // Change turn
-                            //             current_game.turn = opponent_username;
-                            //
-                            //             // Fill letters pool
-                            //             let number_of_required_letters = data.word.length;
-                            //             if(current_game.letters_pool.length > 0) {
-                            //                 let new_generated_pools = fillUsersLettersPool(current_game.letters_pool, user_letter_pool, number_of_required_letters);
-                            //                 current_game[current_user_username].letters_pool = new_generated_pools.new_user_letters_pool;
-                            //                 current_game.letters_pool = new_generated_pools.new_common_letters_pool;
-                            //             } else {
-                            //                 current_game[current_user_username].letters_pool = user_letter_pool;
-                            //             }
-                            //
-                            //             // send response to user
-                            //             current_user.socket.emit('_response', {
-                            //                 "status": true,
-                            //                 "letters_pool": current_game[current_user_username].letters_pool
-                            //             });
-                            //
-                            //             // send current game state to room
-                            //             io.to(connected_room_id).emit("_game_state", {
-                            //                 "state": current_game.state,
-                            //                 "letters_pool": current_game.letters_pool,
-                            //                 "turn": current_game.turn,
-                            //                 "started_at": current_game.started_at,
-                            //                 "finished_at": current_game.finished_at,
-                            //                 "winner": current_game.winner,
-                            //                 [current_user_username]: {
-                            //                     "score": current_game[current_user_username].score,
-                            //                 },
-                            //                 [opponent_username]: {
-                            //                     "score": current_game[opponent_username].score,
-                            //                 }
-                            //             });
-                            //
-                            //             console.log("game state changed");
-                            //         }
-                            //
-                            //     } else {
-                            //         current_user.socket.emit('_response', {
-                            //             "status": false,
-                            //             "message":'Wrong letter, Your submitted word is '+data.word+" but your pool is "+current_game[current_user_username].letters_pool.join('-')
-                            //         });
-                            //     }
-                            // } else {
-                            //     current_user.socket.emit('_notification', {"message":'Wrong word'});
-                            // }
                         }
                     }
                 }
