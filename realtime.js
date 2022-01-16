@@ -352,6 +352,45 @@ class Realtime {
 
             });
 
+            this._socket.on('pass', function() {
+                let current_user = activeUsersSocketIds[socket.id] ? activeUsers.hasOwnProperty(activeUsersSocketIds[socket.id]) ? activeUsers[activeUsersSocketIds[socket.id]] : null : null;
+
+                if(current_user != null) {
+                    let connected_room_id = current_user.connected_room_id;
+                    if (connected_room_id != null) {
+                        let current_user_username = activeUsersSocketIds[socket.id];
+                        let current_users_game_id = activeRoomsGameIds[connected_room_id];
+                        let current_game = activeGames[current_users_game_id];
+                        let opponent_username = current_game.from === current_user_username ? current_game.to : current_game.from;
+
+                        if(current_game.turn === current_user_username) {
+                            // change turn
+                            current_game.turn = opponent_username;
+
+                            // send current game state to room
+                            io.to(connected_room_id).emit("_game_state", {
+                                "state": current_game.state,
+                                "letters_pool": current_game.letters_pool,
+                                "turn": current_game.turn,
+                                "started_at": current_game.started_at,
+                                "finished_at": current_game.finished_at,
+                                "winner": current_game.winner,
+                                "from": current_game.from,
+                                "to": current_game.to,
+                                [current_user_username]: {
+                                    "score": current_game[current_user_username].score,
+                                },
+                                [opponent_username]: {
+                                    "score": current_game[opponent_username].score,
+                                }
+                            });
+                        } else {
+                            current_user.socket.emit('_notification', {"message": 'U cant pass. Not your turn'});
+                        }
+                    }
+                }
+            });
+
             console.log(`New socket connection: ${socket.id}`);
         });
 

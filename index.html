@@ -79,7 +79,7 @@
 </div>
 
 <form action="" id="form">
-    <button id="btnPass">PASS</button>
+    <button id="btnPass" type="button">PASS</button>
     <input id="input" autocomplete="off"/>
     <button id="btnSend">Send</button>
 </form>
@@ -142,13 +142,7 @@
         });
 
         socket.on("_notification", function (data) {
-            if(data.hasOwnProperty('type')) {
-                if(data.type === "turn") {
-                    alert(data.message);
-                }
-            } else {
-                alert(data.message);
-            }
+            alert(data.message);
         });
 
         socket.on("_chat", function(data) {
@@ -193,7 +187,6 @@
                 }
 
                 console.log(data);
-
             } else {
                 console.log("empty data in  _game_state")
             }
@@ -219,9 +212,9 @@
             alert(data.message);
         });
 
-
-
-
+        btnPass.addEventListener("click", function() {
+            socket.emit("pass");
+        });
     }
 
     form.addEventListener('submit', function(e) {
