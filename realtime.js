@@ -122,6 +122,16 @@ class Realtime {
                 }
             });
 
+            this._socket.on('match_request_cancelled', function (data) {
+                if(activeUsers.hasOwnProperty(data.from)) {
+                    activeUsers[data.from]["socket"].emit('_match_request_cancelled', {
+                        "message": data.to+" cancelled match request"
+                    });
+                } else {
+                    socket.emit("_notification", {"message": `${data.from} is not active`})
+                }
+            });
+
             this._socket.on('create_match', function (data) {
                 let from = data.from;
                 let to = data.to;
@@ -233,7 +243,7 @@ class Realtime {
 
                         console.log(`message sent to room. room_id: { ${connected_room_id} }  message : { ${message} }`);
                     } else {
-                        console.log("room id not found");
+                        console.log(`room id not found. current user ${socket.id}`);
                     }
                 } else {
                     console.log("user not found");
