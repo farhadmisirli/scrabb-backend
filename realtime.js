@@ -53,6 +53,8 @@ class Realtime {
                         "state": current_game.state,
                         "letters_pool": current_game.letters_pool,
                         "turn": current_game.turn,
+                        "from": current_game.from,
+                        "to": current_game.to,
                         "started_at": current_game.started_at,
                         "finished_at": current_game.finished_at,
                         "winner": current_game.winner,
@@ -153,12 +155,12 @@ class Realtime {
                         "winner": null,
                         "turn": to,
                         "letters_pool": [
-                            'z' ,'a','a','a','a','a','a','a','a','a' ,'b','b','b', 'c', 'c', 'ç','ç','ç',
-                            'd','d','d','d' ,'e','e','e','e','e','e','e','k',
-                            'g','g','ğ' ,'h','h' ,'i','i','i','i','i','i','ı','ı','j','j', 'k',
-                            'l','l','l','l' ,'m','m','n','n','n','n','n','n','o','o','ö','ö','ö','o',
-                            'p','p', 'q', 'q', 'q','r','r','r','r','r','r','s','s','ş','ş','t','t','t','t','t',
-                            'u','u','ü','ü' ,'v','v', 'x', 'y', 'y', 'ə','ə','ə','ə','ə','ə','ə'
+                            'Z' ,'A','A','A','A','A','A','A','A','A' ,'B','B','B', 'C',   'C', 'Ç','Ç','Ç',
+                            'D','D','D','D' ,'E','E','E','E','E','E','E','K',
+                            'G','G','Ğ' ,'H','H' ,'İ','İ','İ','İ','İ','İ','I','I','J','J', 'K',
+                            'L','L','L','L' ,'M','M','N','N','N','N','N','N','O','O','Ö','Ö','Ö','O',
+                            'P','P', 'Q', 'Q', 'Q','R','R','R','R','R','R','S','S','Ş','Ş','T','T','T','T','T',
+                            'U','U','Ü','Ü' ,'V','V', 'X', 'Y', 'Y', 'Ə','Ə','Ə','Ə','Ə','Ə','Ə'
                         ],
                         "state": {
                             "11a": "v"
@@ -351,6 +353,8 @@ class Realtime {
                                             "state": current_game.state,
                                             "letters_pool": current_game.letters_pool,
                                             "turn": current_game.turn,
+                                            "from": current_game.from,
+                                            "to": current_game.to,
                                             "started_at": current_game.started_at,
                                             "finished_at": current_game.finished_at,
                                             "winner": current_game.winner,
