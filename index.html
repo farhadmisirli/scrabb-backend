@@ -79,7 +79,7 @@
 </div>
 
 <form action="" id="form">
-    <input id="nickname" autocomplete="off" disabled/>
+    <button id="btnPass">PASS</button>
     <input id="input" autocomplete="off"/>
     <button id="btnSend">Send</button>
 </form>
@@ -89,6 +89,7 @@
     var btnSend = document.getElementById('btnSend');
     var form = document.getElementById('form');
     var input = document.getElementById('input');
+    var btnPass = document.getElementById('btnPass');
 
     var nickname = prompt('Enter your Username');
     var socket = null;
@@ -126,6 +127,7 @@
         });
 
         socket.on('_match_request', function (data) {
+
             if(confirm(data.message)) {
                 socket.emit('create_match', {
                     "from": data.from,
@@ -190,6 +192,8 @@
                     alert("your turn");
                 }
 
+                console.log(data);
+
             } else {
                 console.log("empty data in  _game_state")
             }
@@ -214,6 +218,10 @@
         socket.on("_match_request_cancelled", function(data) {
             alert(data.message);
         });
+
+
+
+
     }
 
     form.addEventListener('submit', function(e) {
@@ -227,9 +235,19 @@
         socket.emit("game_check_word", {
             "used_letters": Array.from(words_arr[0]),
             "words": words_arr,
-            "point": 12
+            "point": 12,
+            "state": [
+                {
+                    "a1":"a"
+                },
+                {
+                    "a2":"l"
+                }
+            ]
         });
     });
+
+
 
 </script>
 

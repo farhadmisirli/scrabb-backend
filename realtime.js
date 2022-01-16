@@ -256,6 +256,7 @@ class Realtime {
                                     current_game[current_user_username].score += data.point;
 
                                     current_game.state = data.state;
+                                    console.log(data.state);
 
                                     // check game ended
                                     if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
@@ -393,7 +394,7 @@ function checkWord(word, username) {
 
 function checkWordsArray(words) {
     let words_response = getWordsByArray(words);
-    let words_response_arr = words_response.map(i => i.name);
+    let words_response_arr = words_response.map(i => i.name.toUpperCase());
 
     if(words_response_arr.length !== words.length) {
         return words.filter(x => !words_response_arr.includes(x));
