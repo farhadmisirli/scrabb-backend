@@ -230,6 +230,7 @@ class Realtime {
                             "message": message
                         });
 
+                        console.log("message sent to room");
                     }
                 }
             });
