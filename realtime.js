@@ -326,8 +326,7 @@ class Realtime {
                                                 "score": current_game[opponent_username].score,
                                             }
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         // Change turn
                                         current_game.turn = opponent_username;
 

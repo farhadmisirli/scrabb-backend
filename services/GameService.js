@@ -1,10 +1,10 @@
 const Mysql = require('sync-mysql')
-
+const env = require('dotenv').config();
 const connection = new Mysql({
-    host:'localhost',
-    user:'root',
-    password:'secret123',
-    database:'scrabb'
+    host: env.parsed.mysql_host,
+    user: env.parsed.mysql_username,
+    password: env.parsed.mysql_password,
+    database: env.parsed.mysql_database
 });
 
 function getWords(word) {
