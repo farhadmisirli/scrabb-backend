@@ -3,9 +3,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const server = require('http').createServer(app);
 const env = require('dotenv').config();
-const mysql = require('mysql');
 
-const {getWords, getWordsByArray} = require("./services/GameService")
+const {getWords} = require("./services/GameService")
 
 // socket connections
 const realtime = require('./realtime');
@@ -33,11 +32,20 @@ app.get('/message', function(req, res){
 });
 
 app.get('/checkWord', function(req, res){
-    // let word = req.query.word;
-    // let result = getWords(word);
-    res.send(getWordsByArray(["salam", "qoca"]));
+    let word = req.query.word;
+    res.send(getWords(word));
+});
+
+app.get('/restart', function(req, res) {
+    activeUsers = {}
+    activeUsersSocketIds = {}
+    activeRoomsGameIds = {}
+    activeGames = {}
+    res.send("restarted!");
 });
 
 server.listen(env.parsed.port, () => {
     console.log(`listening on *: ${env.parsed.port}`);
 });
+
+
