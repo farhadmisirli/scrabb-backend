@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
 const server = require('http').createServer(app);
-
+const env = require('dotenv').config();
 
 // socket connections
 const realtime = require('./realtime');
@@ -29,6 +29,6 @@ app.get('/message', function(req, res){
     res.send("message sent to "+room);
 });
 
-server.listen(3001, () => {
-    console.log('listening on *:3001');
+server.listen(env.parsed.port, () => {
+    console.log(`listening on *: ${env.parsed.port}`);
 });
