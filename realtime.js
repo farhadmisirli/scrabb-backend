@@ -206,13 +206,14 @@ class Realtime {
                             "score": activeGames[game_id][to].score,
                         }
                     });
+
+                    console.log(`room id ${room_id} created. and game state sent to room`);
                 } else {
                     let notAvailableUser = activeUsers[from]['isAvailable'] ? to : from;
                     let mustNotifyUser = notAvailableUser === from ? to : from;
                     activeUsers[mustNotifyUser]["socket"].emit("_notification", {
                         "message": `${notAvailableUser} stareted to play`
                     });
-
                 }
 
 
@@ -230,7 +231,7 @@ class Realtime {
                             "message": message
                         });
 
-                        console.log("message sent to room");
+                        console.log(`message sent to room. room_id: { ${connected_room_id} }  message : { ${message} }`);
                     }
                 }
             });
