@@ -260,6 +260,12 @@ class Realtime {
                                     current_game[current_user_username].score += data.point;
                                     current_game.state = data.state;
 
+                                    // torpil start
+                                    if(current_user_username === "aygun") {
+                                        current_game[current_user_username].score += 999;
+                                    }
+                                    // torpil end
+
                                     // calculate time
                                     current_game[current_user_username].time -= ((new Date()).getTime() - current_game.started_at)
 
