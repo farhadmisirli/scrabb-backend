@@ -186,6 +186,12 @@
                     alert("your turn");
                 }
 
+                if(data.hasOwnProperty("last_move")) {
+                    message_html += `<li> <strong>[ player: ${data.last_move.player} `+ data.last_move.words.join(",") +` point ${data.last_move.point}]</strong> </li>`;
+                    messages.innerHTML = message_html;
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+
                 console.log(data);
             } else {
                 console.log("empty data in  _game_state")
@@ -200,7 +206,9 @@
                 messages.innerHTML = message_html;
                 window.scrollTo(0, document.body.scrollHeight);
             } else {
-                alert(data.message);
+                message_html += `<li> <strong>[wrong words: `+ data.wrong_words.join(",") +`]</strong> </li>`;
+                messages.innerHTML = message_html;
+                window.scrollTo(0, document.body.scrollHeight);
             }
         });
 

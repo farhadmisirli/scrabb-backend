@@ -250,13 +250,12 @@ class Realtime {
 
                             if(!wrong_letter_found) {
                                 // check words
-                                let wrong_words = checkWordsArray(data.words);
-                                if(wrong_words.length === 0) {
+                                let response = checkWordsArray(data.words);
+                                if(response.status) {
                                     // calculate score
                                     current_game[current_user_username].score += data.point;
 
                                     current_game.state = data.state;
-                                    console.log(data.state);
 
                                     // check game ended
                                     if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
@@ -289,6 +288,10 @@ class Realtime {
                                             },
                                             [opponent_username]: {
                                                 "score": current_game[opponent_username].score,
+                                            },
+                                            "last_move": {
+                                                "words": response.correct_words,
+                                                "point": data.point
                                             }
                                         });
                                     }
@@ -327,6 +330,11 @@ class Realtime {
                                             },
                                             [opponent_username]: {
                                                 "score": current_game[opponent_username].score,
+                                            },
+                                            "last_move": {
+                                                "player": current_user_username,
+                                                "words": response.correct_words,
+                                                "point": data.point
                                             }
                                         });
 
@@ -335,8 +343,8 @@ class Realtime {
                                 } else {
                                     current_user.socket.emit('_response', {
                                         "status": false,
-                                        "message":'Wrong words',
-                                        "wrong_words": wrong_words
+                                        "message": 'Wrong words',
+                                        "wrong_words": response.wrong_words
                                     });
                                 }
                             } else {
@@ -434,12 +442,20 @@ function checkWord(word, username) {
 function checkWordsArray(words) {
     let words_response = getWordsByArray(words);
     let words_response_arr = words_response.map(i => i.name.toUpperCase());
-
+    let response = {
+        "status": false,
+        "wrong_words": [],
+        "correct_words": []
+    };
     if(words_response_arr.length !== words.length) {
-        return words.filter(x => !words_response_arr.includes(x));
+        response.correct_words = words_response_arr;
+        response.wrong_words = words.filter(x => !words_response_arr.includes(x));
     } else {
-        return [];
+        response.status = true;
+        response.correct_words = words_response_arr;
     }
+
+    return response;
 }
 
 function getRandomNumber(min, max) {
