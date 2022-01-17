@@ -80,6 +80,7 @@
 
 <form action="" id="form">
     <button id="btnPass" type="button">PASS</button>
+    <button id="btnFinish" type="button">FINISH</button>
     <input id="input" autocomplete="off"/>
     <button id="btnSend">Send</button>
 </form>
@@ -90,6 +91,7 @@
     var form = document.getElementById('form');
     var input = document.getElementById('input');
     var btnPass = document.getElementById('btnPass');
+    var btnFinish = document.getElementById('btnFinish');
 
     var nickname = prompt('Enter your Username');
     var socket = null;
@@ -212,16 +214,16 @@
             }
         });
 
-        socket.on("_game_ended", function(data) {
-
-        });
-
         socket.on("_match_request_cancelled", function(data) {
             alert(data.message);
         });
 
         btnPass.addEventListener("click", function() {
             socket.emit("pass");
+        });
+
+        btnFinish.addEventListener("click", function() {
+            socket.emit("finish_game");
         });
     }
 
