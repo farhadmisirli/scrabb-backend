@@ -58,6 +58,8 @@
             background: #efefef;
         }
     </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
 
@@ -84,6 +86,15 @@
     <input id="input" autocomplete="off"/>
     <button id="btnSend">Send</button>
 </form>
+
+<div class="countdown">
+    <span id="time" class="time">00:00.00</span>
+</div>
+<div class="btn-wrap">
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <button id="reset">Reset</button>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -194,7 +205,6 @@
                     window.scrollTo(0, document.body.scrollHeight);
                 }
 
-                console.log(data);
             } else {
                 console.log("empty data in  _game_state")
             }
@@ -248,6 +258,23 @@
                 }
             ]
         });
+    });
+
+
+
+
+
+
+    $('#start').on('click', function(){
+        countdown.start();
+    });
+
+    $('#stop').on('click', function(){
+        countdown.stop();
+    });
+
+    $('#reset').on('click', function(){
+        countdown.init();
     });
 
 
