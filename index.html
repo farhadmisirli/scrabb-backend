@@ -87,15 +87,6 @@
     <button id="btnSend">Send</button>
 </form>
 
-<div class="countdown">
-    <span id="time" class="time">00:00.00</span>
-</div>
-<div class="btn-wrap">
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
-    <button id="reset">Reset</button>
-</div>
-
 <script src="/socket.io/socket.io.js"></script>
 <script>
     var btnSend = document.getElementById('btnSend');
@@ -204,6 +195,11 @@
                     messages.innerHTML = message_html;
                     window.scrollTo(0, document.body.scrollHeight);
                 }
+
+                message_html += `<li><i style="color:red;">${new Date(data[nickname].time + Date.now())}</i></li>`
+                messages.innerHTML = message_html
+
+                console.log(data);
 
             } else {
                 console.log("empty data in  _game_state")

@@ -60,13 +60,11 @@ class Realtime {
                         "winner": current_game.winner,
                         [disconnected_user_username]: {
                             "score": current_game[disconnected_user_username].score,
-                            "time": current_game[disconnected_user_username].time,
-                            "time2": current_game[disconnected_user_username].time2
+                            "time": current_game[disconnected_user_username].time
                         },
                         [opponent_username]: {
                             "score": current_game[opponent_username].score,
-                            "time": current_game[opponent_username].time,
-                            "time2": current_game[opponent_username].time2
+                            "time": current_game[opponent_username].time
                         }
                     });
                 }
@@ -137,14 +135,12 @@ class Realtime {
                             "score": 0,
                             "letters_pool": [],
                             "time": 1500000,
-                            "time2": Date.now() + 1500000,
                             "words": []
                         },
                         [to]: {
                             "score": 0,
                             "letters_pool": [],
                             "time": 1500000,
-                            "time2": 1500000,
                             "words": []
                         }
                     }
@@ -187,13 +183,11 @@ class Realtime {
                         "to": activeGames[game_id].to,
                         [from]: {
                             "score": activeGames[game_id][from].score,
-                            "time": activeGames[game_id][from].time,
-                            "time2": activeGames[game_id][from].time2
+                            "time": activeGames[game_id][from].time
                         },
                         [to]: {
                             "score": activeGames[game_id][to].score,
-                            "time": activeGames[game_id][to].time,
-                            "time2": activeGames[game_id][to].time2
+                            "time": activeGames[game_id][to].time
                         }
                     });
 
@@ -273,8 +267,7 @@ class Realtime {
                                     // torpil end
 
                                     // calculate time
-                                    current_game[current_user_username].time -= (Date.now() - current_game.started_at)
-                                    current_game[current_user_username].time2 = (Date.now() + current_game[current_user_username].time)
+                                    current_game[current_user_username].time = 1500000 - ((new Date()).getTime() - current_game.started_at)
 
                                     // check game ended
                                     if((current_game.letters_pool.length === 0 && current_game[current_user_username].letters_pool.length === 0 && current_game[opponent_username].letters_pool === 0) || (current_game.letters_pool.length === 0 && current_game[opponent_username].letters_pool.length === 0) ) {
@@ -305,14 +298,12 @@ class Realtime {
                                             "to": current_game.to,
                                             [current_user_username]: {
                                                 "score": current_game[current_user_username].score,
-                                                "time": current_game[current_user_username].time,
-                                                "time2": current_game[current_user_username].time2
+                                                "time": current_game[current_user_username].time
 
                                             },
                                             [opponent_username]: {
                                                 "score": current_game[opponent_username].score,
-                                                "time": current_game[opponent_username].time,
-                                                "time2": current_game[opponent_username].time2
+                                                "time": current_game[opponent_username].time
                                             },
                                             "last_move": {
                                                 "words": response.correct_words,
@@ -352,13 +343,11 @@ class Realtime {
                                             "winner": current_game.winner,
                                             [current_user_username]: {
                                                 "score": current_game[current_user_username].score,
-                                                "time": current_game[current_user_username].time,
-                                                "time2": current_game[current_user_username].time2
+                                                "time": current_game[current_user_username].time
                                             },
                                             [opponent_username]: {
                                                 "score": current_game[opponent_username].score,
-                                                "time": current_game[opponent_username].time,
-                                                "time2": current_game[opponent_username].time2
+                                                "time": current_game[opponent_username].time
                                             },
                                             "last_move": {
                                                 "player": current_user_username,
@@ -406,8 +395,7 @@ class Realtime {
                             current_game.turn = opponent_username;
 
                             // calculate time
-                            current_game[current_user_username].time -= (Date.now() - current_game.started_at)
-                            current_game[current_user_username].time2 = (Date.now() + current_game[current_user_username].time)
+                            current_game[current_user_username].time = 1500000 - ((new Date()).getTime() - current_game.started_at)
 
                             // send current game state to room
                             io.to(connected_room_id).emit("_game_state", {
@@ -421,13 +409,11 @@ class Realtime {
                                 "to": current_game.to,
                                 [current_user_username]: {
                                     "score": current_game[current_user_username].score,
-                                    "time": current_game[current_user_username].time,
-                                    "time2": current_game[current_user_username].time2,
+                                    "time": current_game[current_user_username].time
                                 },
                                 [opponent_username]: {
                                     "score": current_game[opponent_username].score,
-                                    "time": current_game[opponent_username].time,
-                                    "time2": current_game[opponent_username].time2,
+                                    "time": current_game[opponent_username].time
                                 }
                             });
                         } else {
@@ -466,13 +452,11 @@ class Realtime {
                             "to": current_game.to,
                             [current_user_username]: {
                                 "score": current_game[current_user_username].score,
-                                "time": current_game[current_user_username].time,
-                                "time2": current_game[current_user_username].time2
+                                "time": current_game[current_user_username].time
                             },
                             [opponent_username]: {
                                 "score": current_game[opponent_username].score,
-                                "time": current_game[opponent_username].time,
-                                "time2": current_game[opponent_username].time2
+                                "time": current_game[opponent_username].time
                             }
                         });
                     }
